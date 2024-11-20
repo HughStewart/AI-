@@ -1,0 +1,136 @@
+using System;
+using System.Threading;
+
+class DinosaurGame
+{
+    static int playerPosition = 0;
+    static int obstaclePosition = 50;
+    static bool isJumping = false;
+    static bool isGameOver = false;
+    static int score = 0;
+    static int highScore = 0;
+
+    static void Main()
+    {
+        Console.CursorVisible = false;
+        Console.WriteLine("Press SPACE to jump and avoid obstacles. Press ESC to quit.");
+        Console.WriteLine("Press ENTER to start!");
+        Console.ReadLine();
+        Console.Clear();
+
+        Thread inputThread = new Thread(CheckInput);
+        inputThread.Start();
+
+        while (!isGameOver)
+        {
+            Console.Clear();
+            DrawPlayer();
+            DrawObstacle();
+            UpdateGame();
+
+            if (isGameOver)
+            {
+                Console.Clear();
+                Console.WriteLine("Game Over!");
+                Console.WriteLine($"Your Score: {score}");
+                if (score > highScore)
+                {
+                    highScore = score;
+                    Console.WriteLine("New High Score!");
+                }
+                Console.WriteLine($"High Score: {highScore}");
+                Console.WriteLine("Press ENTER to play again or ESC to exit.");
+                RestartGame();
+            }
+
+            Thread.Sleep(100); // Game loop delay, adjust for difficulty
+        }
+    }
+
+    static void CheckInput()
+    {
+        while (true)
+        {
+            if (Console.KeyAvailable)
+            {
+                ConsoleKey key = Console.ReadKey(true).Key;
+
+                if (key == ConsoleKey.Spacebar && !isJumping)
+                {
+                    isJumping = true;
+                    Thread jumpThread = new Thread(HandleJump);
+                    jumpThread.Start();
+                }
+
+                if (key == ConsoleKey.Escape)
+                {
+                    isGameOver = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    static void HandleJump()
+    {
+        playerPosition = 1;
+        Thread.Sleep(300); // Jump duration
+        playerPosition = 0;
+        isJumping = false;
+    }
+
+    static void DrawPlayer()
+    {
+        Console.SetCursorPosition(5, 10 - playerPosition);
+        Console.Write("O");
+        Console.SetCursorPosition(5, 11 - playerPosition);
+        Console.Write("|");
+    }
+
+    static void DrawObstacle()
+    {
+        if (obstaclePosition > 0)
+        {
+            Console.SetCursorPosition(obstaclePosition, 10);
+            Console.Write("X");
+        }
+    }
+
+    static void UpdateGame()
+    {
+        if (obstaclePosition == 5 && playerPosition == 0)
+        {
+            isGameOver = true;
+        }
+        else
+        {
+            score++;
+            obstaclePosition--;
+
+            if (obstaclePosition < 0)
+            {
+                obstaclePosition = 50; // Reset obstacle
+            }
+        }
+    }
+
+    static void RestartGame()
+    {
+        ConsoleKey key;
+        do
+        {
+            key = Console.ReadKey(true).Key;
+            if (key == ConsoleKey.Enter)
+            {
+                isGameOver = false;
+                score = 0;
+                obstaclePosition = 50;
+                Main(); // Restart the game
+            }
+            else if (key == ConsoleKey.Escape)
+            {
+                Environment.Exit(0);
+            }
+        } while (key != ConsoleKey.Enter && key != ConsoleKey.Escape);
+    }
+}
